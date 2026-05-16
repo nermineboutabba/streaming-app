@@ -1,0 +1,14 @@
+{
+  "name": "gateway",
+  "version": "1.0.0",
+  "main": "server.js",
+  "dependencies": {
+    "@apollo/server": "^4.13.0",
+    "@grpc/grpc-js": "^1.14.3",
+    "@grpc/proto-loader": "^0.7.15",
+    "body-parser": "^1.20.5",
+    "cors": "^2.8.5",
+    "express": "^4.22.2",
+    "graphql": "^16.14.0"
+  }
+}
