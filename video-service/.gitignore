@@ -1,0 +1,4 @@
+node_modules/
+videos.db
+.env
+src/uploads/*
