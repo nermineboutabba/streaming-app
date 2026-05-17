@@ -98,6 +98,52 @@ app.get('/api/users/:id', (req, res) => {
     );
 });
 
+app.put('/api/users/:id', (req, res) => {
+
+    userClient.UpdateUser(
+        {
+            user_id: req.params.id,
+            username: req.body.username,
+            email: req.body.email
+        },
+        (err, response) => {
+
+            if (err) {
+                return res.status(500).json(err);
+            }
+
+            res.json(response);
+        }
+    );
+});
+
+app.post('/api/follow', (req, res) => {
+
+    userClient.FollowUser(req.body, (err, response) => {
+
+        if (err) {
+            return res.status(500).json(err);
+        }
+
+        res.json(response);
+    });
+});
+
+app.get('/api/followers/:id', (req, res) => {
+
+    userClient.GetFollowers(
+        { user_id: req.params.id },
+        (err, response) => {
+
+            if (err) {
+                return res.status(500).json(err);
+            }
+
+            res.json(response);
+        }
+    );
+});
+
 /* ---------- VIDEO ROUTES ---------- */
 
 // LIST VIDEOS
@@ -111,6 +157,38 @@ app.get('/api/videos', (req, res) => {
 
         res.json(response);
     });
+});
+
+// GET LATEST VIDEOS
+app.get('/api/videos/latest', (req, res) => {
+
+    videoClient.GetLatestVideos(
+        {},
+        (err, response) => {
+
+            if (err) {
+                return res.status(500).json(err);
+            }
+
+            res.json(response);
+        }
+    );
+});
+
+// GET TRENDING VIDEOS
+app.get('/api/videos/trending', (req, res) => {
+
+    videoClient.GetTrendingVideos(
+        {},
+        (err, response) => {
+
+            if (err) {
+                return res.status(500).json(err);
+            }
+
+            res.json(response);
+        }
+    );
 });
 
 // GET VIDEO
@@ -134,6 +212,22 @@ app.get('/api/search/:query', (req, res) => {
 
     videoClient.SearchVideos(
         { query: req.params.query },
+        (err, response) => {
+
+            if (err) {
+                return res.status(500).json(err);
+            }
+
+            res.json(response);
+        }
+    );
+});
+
+// DELETE VIDEO
+app.delete('/api/videos/:id', (req, res) => {
+
+    videoClient.DeleteVideo(
+        { id: parseInt(req.params.id) },
         (err, response) => {
 
             if (err) {
@@ -173,6 +267,22 @@ app.post('/api/like', (req, res) => {
     });
 });
 
+// GET COMMENTS FOR A VIDEO
+app.get('/api/comments/:videoId', (req, res) => {
+
+    interactionClient.GetComments(
+        { videoId: req.params.videoId },
+        (err, response) => {
+
+            if (err) {
+                return res.status(500).json(err);
+            }
+
+            res.json(response);
+        }
+    );
+});
+
 /* ======================================================
    START EXPRESS SERVER
 ====================================================== */
@@ -205,6 +315,7 @@ type Video {
     views: Int
     likes: Int
     comments: [Comment]
+    createdAt: String
 }
 
 type Query {
@@ -212,6 +323,10 @@ type Query {
     getVideoComments(videoId: String!): [Comment]
 
     getVideos: [Video]
+
+    getTrendingVideos: [Video]
+
+    getLatestVideos: [Video]
 }
 `;
 
@@ -249,7 +364,39 @@ const resolvers = {
                     }
                 );
             });
-        }
+        },
+
+        getTrendingVideos: async () => {
+
+            return new Promise((resolve, reject) => {
+
+                videoClient.GetTrendingVideos(
+                    {},
+                    (err, response) => {
+
+                        if (err) reject(err);
+
+                        else resolve(response.videos || []);
+                    }
+                );
+            });
+        },
+
+        getLatestVideos: async () => {
+
+            return new Promise((resolve, reject) => {
+
+                videoClient.GetLatestVideos(
+                    {},
+                    (err, response) => {
+
+                        if (err) reject(err);
+
+                        else resolve(response.videos || []);
+                    }
+                );
+            });
+        },
     },
 
     Video: {
