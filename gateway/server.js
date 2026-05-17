@@ -58,32 +58,87 @@ const videoClient =
 
 // REGISTER
 app.post('/api/register', (req, res) => {
+
     userClient.Register(req.body, (err, response) => {
+
         if (err) {
-            return res.status(500).json({ error: err.message, details: err.details });
+            return res.status(500).json(err);
         }
+
         res.json(response);
     });
 });
 
 // LOGIN
 app.post('/api/login', (req, res) => {
+
     userClient.Login(req.body, (err, response) => {
+
         if (err) {
-            return res.status(500).json({ error: err.message, details: err.details });
+            return res.status(500).json(err);
         }
+
         res.json(response);
     });
 });
 
 // GET USER
 app.get('/api/users/:id', (req, res) => {
+
     userClient.GetUser(
         { user_id: req.params.id },
         (err, response) => {
+
             if (err) {
-                return res.status(500).json({ error: err.message, details: err.details });
+                return res.status(500).json(err);
             }
+
+            res.json(response);
+        }
+    );
+});
+
+app.put('/api/users/:id', (req, res) => {
+
+    userClient.UpdateUser(
+        {
+            user_id: req.params.id,
+            username: req.body.username,
+            email: req.body.email
+        },
+        (err, response) => {
+
+            if (err) {
+                return res.status(500).json(err);
+            }
+
+            res.json(response);
+        }
+    );
+});
+
+app.post('/api/follow', (req, res) => {
+
+    userClient.FollowUser(req.body, (err, response) => {
+
+        if (err) {
+            return res.status(500).json(err);
+        }
+
+        res.json(response);
+    });
+});
+
+app.get('/api/followers/:id', (req, res) => {
+
+    userClient.GetFollowers(
+        { user_id: req.params.id },
+        (err, response) => {
+
+            if (err) {
+                return res.status(500).json(err);
+            }
+
             res.json(response);
         }
     );
@@ -93,22 +148,60 @@ app.get('/api/users/:id', (req, res) => {
 
 // LIST VIDEOS
 app.get('/api/videos', (req, res) => {
+
     videoClient.ListVideos({}, (err, response) => {
+
         if (err) {
-            return res.status(500).json({ error: err.message, details: err.details });
+            return res.status(500).json(err);
         }
+
         res.json(response);
     });
 });
 
+// GET LATEST VIDEOS
+app.get('/api/videos/latest', (req, res) => {
+
+    videoClient.GetLatestVideos(
+        {},
+        (err, response) => {
+
+            if (err) {
+                return res.status(500).json(err);
+            }
+
+            res.json(response);
+        }
+    );
+});
+
+// GET TRENDING VIDEOS
+app.get('/api/videos/trending', (req, res) => {
+
+    videoClient.GetTrendingVideos(
+        {},
+        (err, response) => {
+
+            if (err) {
+                return res.status(500).json(err);
+            }
+
+            res.json(response);
+        }
+    );
+});
+
 // GET VIDEO
 app.get('/api/videos/:id', (req, res) => {
+
     videoClient.GetVideo(
         { id: parseInt(req.params.id) },
         (err, response) => {
+
             if (err) {
-                return res.status(500).json({ error: err.message, details: err.details });
+                return res.status(500).json(err);
             }
+
             res.json(response);
         }
     );
@@ -116,12 +209,31 @@ app.get('/api/videos/:id', (req, res) => {
 
 // SEARCH VIDEOS
 app.get('/api/search/:query', (req, res) => {
+
     videoClient.SearchVideos(
         { query: req.params.query },
         (err, response) => {
+
             if (err) {
-                return res.status(500).json({ error: err.message, details: err.details });
+                return res.status(500).json(err);
             }
+
+            res.json(response);
+        }
+    );
+});
+
+// DELETE VIDEO
+app.delete('/api/videos/:id', (req, res) => {
+
+    videoClient.DeleteVideo(
+        { id: parseInt(req.params.id) },
+        (err, response) => {
+
+            if (err) {
+                return res.status(500).json(err);
+            }
+
             res.json(response);
         }
     );
@@ -225,11 +337,28 @@ app.post('/api/like', (req, res) => {
     });
 });
 
+// GET COMMENTS FOR A VIDEO
+app.get('/api/comments/:videoId', (req, res) => {
+
+    interactionClient.GetComments(
+        { videoId: req.params.videoId },
+        (err, response) => {
+
+            if (err) {
+                return res.status(500).json(err);
+            }
+
+            res.json(response);
+        }
+    );
+});
+
 /* ======================================================
    START EXPRESS SERVER
 ====================================================== */
 
 app.listen(3001, () => {
+
     console.log('✅ API Gateway running on port 3001');
 });
 
@@ -256,171 +385,102 @@ type Video {
     views: Int
     likes: Int
     comments: [Comment]
+    createdAt: String
 }
 
 type Query {
+
     getVideoComments(videoId: String!): [Comment]
+
     getVideos: [Video]
-}
 
-type Mutation {
-    addComment(videoId: String!, userId: String!, content: String!): CommentResponse
-    likeVideo(videoId: String!, userId: String!): LikeResponse
-}
+    getTrendingVideos: [Video]
 
-type CommentResponse {
-    success: Boolean!
-    message: String!
-    id: String
-    error: String
-}
-
-type LikeResponse {
-    success: Boolean!
-    message: String!
-    totalLikes: Int
-    error: String
+    getLatestVideos: [Video]
 }
 `;
 
 const resolvers = {
+
     Query: {
+
         getVideoComments: async (_, { videoId }) => {
-            // Validation
-            if (!videoId || videoId.trim() === '') {
-                throw new Error("videoId est requis");
-            }
-            
+
             return new Promise((resolve, reject) => {
+
                 interactionClient.GetComments(
                     { videoId },
                     (err, response) => {
-                        if (err) {
-                            reject(new Error(err.message));
-                        } else {
-                            resolve(response.comments || []);
-                        }
+
+                        if (err) reject(err);
+
+                        else resolve(response.comments || []);
                     }
                 );
             });
         },
-        
+
         getVideos: async () => {
+
             return new Promise((resolve, reject) => {
+
                 videoClient.ListVideos(
                     {},
                     (err, response) => {
-                        if (err) reject(new Error(err.message));
+
+                        if (err) reject(err);
+
                         else resolve(response.videos || []);
                     }
                 );
             });
-        }
-    },
-    
-    Mutation: {
-        addComment: async (_, { videoId, userId, content }) => {
-            // Validation
-            if (!videoId || videoId.trim() === '') {
-                return {
-                    success: false,
-                    message: "videoId est requis",
-                    error: "Paramètre invalide"
-                };
-            }
-            
-            if (!userId || userId.trim() === '') {
-                return {
-                    success: false,
-                    message: "userId est requis",
-                    error: "Paramètre invalide"
-                };
-            }
-            
-            if (!content || content.trim() === '') {
-                return {
-                    success: false,
-                    message: "Le contenu du commentaire ne peut pas être vide",
-                    error: "Paramètre invalide"
-                };
-            }
-            
-            return new Promise((resolve) => {
-                interactionClient.AddComment(
-                    { videoId, userId, content },
+        },
+
+        getTrendingVideos: async () => {
+
+            return new Promise((resolve, reject) => {
+
+                videoClient.GetTrendingVideos(
+                    {},
                     (err, response) => {
-                        if (err) {
-                            resolve({
-                                success: false,
-                                message: err.message,
-                                error: err.details || "Erreur lors de l'ajout du commentaire"
-                            });
-                        } else {
-                            resolve({
-                                success: true,
-                                message: response.message,
-                                id: response.id
-                            });
-                        }
+
+                        if (err) reject(err);
+
+                        else resolve(response.videos || []);
                     }
                 );
             });
         },
-        
-        likeVideo: async (_, { videoId, userId }) => {
-            // Validation
-            if (!videoId || videoId.trim() === '') {
-                return {
-                    success: false,
-                    message: "videoId est requis",
-                    error: "Paramètre invalide"
-                };
-            }
-            
-            if (!userId || userId.trim() === '') {
-                return {
-                    success: false,
-                    message: "userId est requis",
-                    error: "Paramètre invalide"
-                };
-            }
-            
-            return new Promise((resolve) => {
-                interactionClient.LikeVideo(
-                    { videoId, userId },
+
+        getLatestVideos: async () => {
+
+            return new Promise((resolve, reject) => {
+
+                videoClient.GetLatestVideos(
+                    {},
                     (err, response) => {
-                        if (err) {
-                            resolve({
-                                success: false,
-                                message: err.message,
-                                error: err.details || "Erreur lors de l'ajout du like",
-                                totalLikes: 0
-                            });
-                        } else {
-                            resolve({
-                                success: true,
-                                message: response.message,
-                                totalLikes: response.totalLikes
-                            });
-                        }
+
+                        if (err) reject(err);
+
+                        else resolve(response.videos || []);
                     }
                 );
             });
-        }
+        },
     },
-    
+
     Video: {
+
         comments: async (parent) => {
-            // Validation
-            if (!parent.id) {
-                return [];
-            }
-            
+
             return new Promise((resolve, reject) => {
+
                 interactionClient.GetComments(
                     { videoId: String(parent.id) },
                     (err, response) => {
+
                         if (err) reject(err);
+
                         else resolve(response.comments || []);
                     }
                 );
@@ -435,9 +495,11 @@ const server = new ApolloServer({
 });
 
 async function startGraphQL() {
+
     const { url } = await startStandaloneServer(server, {
         listen: { port: 4000 }
     });
+
     console.log(`🚀 GraphQL Gateway running at ${url}`);
 }
 
